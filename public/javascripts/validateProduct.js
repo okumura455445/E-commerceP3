@@ -11,10 +11,14 @@ function validateProduct(req, res, next) {
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     errors.push('El campo "name" es obligatorio y debe ser un string no vacío.');
   }
-  if (price === undefined || price === null || typeof price !== 'number' || price <= 0) {
+
+  const parsedPrice = parseFloat(price);
+  if (isNaN(parsedPrice) || parsedPrice <= 0) {
     errors.push('El campo "price" es obligatorio y debe ser un número mayor a 0.');
   }
-  if (stock === undefined || stock === null || !Number.isInteger(stock) || stock < 0) {
+
+  const parsedStock = parseInt(stock, 10);
+  if (isNaN(parsedStock) || parsedStock < 0) {
     errors.push('El campo "stock" es obligatorio y debe ser un entero >= 0.');
   }
 

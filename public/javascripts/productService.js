@@ -3,8 +3,13 @@ const Product = require('./product');
 
 class ProductService {
   constructor() {
-    this.products = [];
-    this.nextId = 1;
+    this.products = [
+      new Product(1, 'Monitor Gaming 27"', 'Monitor 4K UHD de 27 pulgadas con 144Hz', 299.99, 10, 'Monitores', 'monitor.jpg'),
+      new Product(2, 'Teclado Mecánico RGB', 'Teclado mecánico con switches rojos y iluminación RGB', 89.99, 15, 'Periféricos', 'keyboard.jpg'),
+      new Product(3, 'Mouse Gamer Óptico', 'Mouse óptico de alta precisión con 16000 DPI', 49.99, 20, 'Periféricos', 'mouse.jpg'),
+      new Product(4, 'Auriculares Inalámbricos', 'Auriculares con cancelación de ruido y batería de 30h', 129.99, 8, 'Audio', 'earphon.jpg')
+    ];
+    this.nextId = 5;
   }
 
   getAll() {
@@ -16,13 +21,13 @@ class ProductService {
     return product ? product.toJSON() : null;
   }
 
-  create({ name, description, price, stock, category }) {
-    const newProduct = new Product(this.nextId++, name, description, price, stock, category);
+  create({ name, description, price, stock, category, image }) {
+    const newProduct = new Product(this.nextId++, name, description, price, stock, category, image);
     this.products.push(newProduct);
     return newProduct.toJSON();
   }
 
-  update(id, { name, description, price, stock, category }) {
+  update(id, { name, description, price, stock, category, image }) {
     const index = this.products.findIndex(p => p.id === id);
     if (index === -1) return null;
 
@@ -33,6 +38,7 @@ class ProductService {
     product.price = price;
     product.stock = stock;
     product.category = category || '';
+    product.image = image || '';
 
     return product.toJSON();
   }

@@ -43,6 +43,7 @@ const create = (req, res) => {
       price: req.body.price,
       stock: req.body.stock,
       category: req.body.category?.trim() || '',
+      image: req.file ? req.file.filename : '',
     });
 
     res.status(201).json({
@@ -75,6 +76,7 @@ const update = (req, res) => {
     price: req.body.price,
     stock: req.body.stock,
     category: req.body.category?.trim() || '',
+    image: req.file ? req.file.filename : req.body.image || '',
   });
 
   if (!updated) {

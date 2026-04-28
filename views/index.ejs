@@ -1,11 +1,107 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title><%= title %></title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
-  </head>
-  <body>
-    <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
-  </body>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechStore - E-commerce de Gadgets</title>
+  <link rel="stylesheet" href="/stylesheets/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>TechStore</h1>
+      <nav>
+        <button id="addProductBtn" class="btn-primary">+ Nuevo Producto</button>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <div id="productsContainer" class="products-grid">
+        <% products.forEach(product => { %>
+          <div class="product-card">
+            <img src="<%= product.image ? `images/${product.image}` : 'images/monitor.jpg' %>" alt="<%= product.name %>" class="product-image">
+            <h3><%= product.name %></h3>
+            <p class="product-description"><%= product.description %></p>
+            <p class="product-price">$<%= product.price %></p>
+            <p class="product-stock">Stock: <%= product.stock %></p>
+            <p class="product-category">Categoría: <%= product.category %></p>
+            <div class="product-actions">
+              <button class="btn-edit" onclick="editProduct(<%= product.id %>)">Editar</button>
+              <button class="btn-delete" onclick="confirmDelete(<%= product.id %>)">Eliminar</button>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+      <div id="emptyState" class="empty-state hidden">
+        <p>No hay productos aún. ¡Añade el primero!</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para crear/editar producto -->
+  <div id="productModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modalTitle">Nuevo Producto</h2>
+      <form id="productForm" enctype="multipart/form-data">
+        <input type="hidden" id="productId">
+        
+        <div class="form-group">
+          <label for="name">Nombre *</label>
+          <input type="text" id="name" name="name" required placeholder="Ej.: Mouse Gamer" />
+          <span class="error-msg" id="nameError"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="price">Precio *</label>
+          <input type="number" id="price" name="price" step="0.01" min="0.01" required placeholder="0.00" />
+          <span class="error-msg" id="priceError"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="stock">Stock *</label>
+          <input type="number" id="stock" name="stock" step="1" min="0" required placeholder="0" />
+          <span class="error-msg" id="stockError"></span>
+        </div>
+
+        <div class="form-group">
+          <label for="description">Descripción</label>
+          <textarea id="description" name="description" rows="3" placeholder="Descripción del producto"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="category">Categoría</label>
+          <input type="text" id="category" name="category" placeholder="Ej.: Periféricos" />
+        </div>
+
+        <div class="form-group">
+          <label for="image">Imagen</label>
+          <input type="file" id="image" name="image" accept="image/*" />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Guardar</button>
+          <button type="button" class="btn-secondary" id="cancelModal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación para eliminar -->
+  <div id="deleteModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>¿Eliminar producto?</h2>
+      <p>Esta acción no se puede deshacer. ¿Estás seguro?</p>
+      <div class="form-actions">
+        <button id="confirmDeleteBtn" class="btn-danger">Eliminar</button>
+        <button class="btn-secondary" id="cancelDeleteBtn">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/javascripts/script.js"></script>
+</body>
 </html>

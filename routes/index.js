@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
+const productService = require('../public/javascripts/productService');
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get('/', (req, res) => {
+  res.render('index', { products: productService.getAll() });
 });
+
 
 module.exports = router;
