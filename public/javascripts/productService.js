@@ -55,3 +55,24 @@ class ProductService {
 // Singleton para toda la aplicación
 const productService = new ProductService();
 module.exports = productService;
+
+// services/productService.js
+const ProductModel = require('../models/productModel');
+
+class ProductService {
+  async getAll() { return await ProductModel.getAll(); }
+  async getById(id) { return await ProductModel.getById(id); }
+  async create(data) {
+    const id = await ProductModel.create(data);
+    return await ProductModel.getById(id);  // retorna el producto completo
+  }
+  async update(id, data) {
+    const success = await ProductModel.update(id, data);
+    if (!success) return null;
+    return await ProductModel.getById(id);
+  }
+  async delete(id) { return await ProductModel.delete(id); }
+}
+
+const productService = new ProductService();
+module.exports = productService;
