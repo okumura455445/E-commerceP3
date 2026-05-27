@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth0 Sample App</title>
+    <link rel="stylesheet" href="/stylesheets/login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="auth-card">
+            
+            <div id="view-loading" class="view active">
+                <div class="spinner"></div>
+                <p>Verificando sesión...</p>
+            </div>
+
+            <div id="view-error" class="view error-box" hidden>
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <p id="error-text">Ocurrió un error</p>
+            </div>
+
+            <div id="view-unauthenticated" class="view" hidden>
+                <div class="header-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h2>Bienvenido</h2>
+                <p class="subtitle">Accede a tu cuenta o crea una nueva para continuar.</p>
+                
+                <div class="button-group">
+                    <button class="btn btn-primary" onclick="client.loginWithRedirect()">
+                        <i class="fa-solid fa-right-to-bracket"></i> Iniciar Sesión
+                    </button>
+                    <button class="btn btn-outline" onclick="client.loginWithRedirect({authorizationParams:{screen_hint:'signup'}})">
+                        <i class="fa-solid fa-user-plus"></i> Registrarse
+                    </button>
+                </div>
+            </div>
+
+            <div id="view-authenticated" class="view" hidden>
+                <div class="profile-header">
+                    <div class="avatar-placeholder">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <h2>¡Hola!</h2>
+                    <p>Sesión iniciada como: <br> <strong id="user-email" class="highlight"></strong></p>
+                </div>
+                
+                <div class="profile-data">
+                    <p class="data-title">Datos del Token JWT:</p>
+                    <pre id="user-profile"></pre>
+                </div>
+                
+                <button class="btn btn-danger" onclick="client.logout({logoutParams:{returnTo:location.origin}})">
+                    <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.18/auth0-spa-js.production.js"></script>
+    <script>
+        // Lógica de Vistas (Mejorada para manejar clases 'active' y ocultar las demás)
+        const displayView = name => {
+            ['loading', 'error', 'authenticated', 'unauthenticated'].forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if(el) {
+                    el.hidden = v !== name;
+                    if (v === name) el.classList.add('active');
+                    else el.classList.remove('active');
+                }
+            });
+        };
+        const setTextContent = (id, content) => document.getElementById(id).textContent = content;
+        const saveToken = (token, remember = true) => {
+            if (remember) {
+                localStorage.setItem('techstore_token', token);
+            } else {
+                sessionStorage.setItem('techstore_token', token);
+            }
+        };
+
+        const saveAuth0Profile = async (user) => {
+            const response = await fetch('/auth/auth0', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sub: user.sub,
+                    email: user.email,
+                    name: user.name,
+                    nickname: user.nickname,
+                    picture: user.picture,
+                    email_verified: user.email_verified
+                })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.message || 'Error guardando el perfil en el servidor');
+            }
+            saveToken(data.data.token, true);
+            return data.data;
+        };
+
+        (async () => {
+            // Inicializar Auth0 SDK
+            // Usamos el origen de la aplicación como callback para que coincida
+            // con la URL permitida en Auth0: http://localhost:3000/
+            const redirectUri = location.origin;
+            window.client = await auth0.createAuth0Client({
+                domain: 'dev-islpgzf1ltmedoot.us.auth0.com',
+                clientId: 'IXUEJkq5Pfw9CLO8gTE8qhJMSOL8eFPI',
+                authorizationParams: { redirect_uri: redirectUri },
+            });
+
+            // Manejo de Errores de redirección
+            if (location.search.includes("error=")) {
+                const params = new URLSearchParams(location.search);
+                document.getElementById("error-text").textContent = `Error: ${params.get("error")} — ${params.get("error_description")}`;
+                displayView("error");
+                history.replaceState({}, "", location.pathname);
+                return;
+            }
+
+            // Manejo del callback tras login exitoso
+            if (location.search.includes("code=") && location.search.includes("state=")) {
+                await window.client.handleRedirectCallback();
+                history.replaceState({}, "", location.pathname);
+            }
+
+            // Verificar si el usuario está autenticado
+            if (await window.client.isAuthenticated()) {
+                const user = await window.client.getUser();
+                await saveAuth0Profile(user);
+                setTextContent("user-email", user.email);
+                setTextContent("user-profile", JSON.stringify(user, null, 2));
+                displayView("authenticated");
+                window.location.href = '/products';
+                return;
+            }
+
+            // Mostrar botones si no está logueado
+            displayView("unauthenticated");
+        })();
+    </script>
+</body>
+</html>

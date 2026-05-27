@@ -1,6 +1,17 @@
+// Si no existe authFetch, lo definimos aquí también (por si auth.js se carga antes)
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem('techstore_token') || sessionStorage.getItem('techstore_token');
+  const headers = {
+    ...options.headers,
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+  return fetch(url, { ...options, headers, credentials: 'include' });
+}
+
 // script.js
 document.addEventListener('DOMContentLoaded', () => {
   const addProductBtn = document.getElementById('addProductBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
   const productModal = document.getElementById('productModal');
   const deleteModal = document.getElementById('deleteModal');
   const closeBtns = document.querySelectorAll('.close');
@@ -10,6 +21,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
   let currentProductId = null;
+
+  function clearAuthTokens() {
+    sessionStorage.removeItem('techstore_token');
+    localStorage.removeItem('techstore_token');
+  }
+
+  async function refreshLogoutButton() {
+    if (!logoutBtn) return;
+    try {
+      const response = await authFetch('/auth/profile');
+      logoutBtn.classList.toggle('hidden', !response.ok);
+    } catch (error) {
+      logoutBtn.classList.add('hidden');
+    }
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await fetch('/auth/logout', { method: 'POST', credentials: 'include' });
+      } catch (_) {
+        // Ignore errors
+      }
+      clearAuthTokens();
+      window.location.href = '/login';
+    });
+  }
 
   // Abrir modal para nuevo producto
   addProductBtn.addEventListener('click', () => {
@@ -50,13 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
       let response;
       if (currentProductId) {
         // Editar producto
-        response = await fetch(`/api/products/${currentProductId}`, {
+        response = await authFetch(`/api/products/${currentProductId}`, {
           method: 'PUT',
           body: formData
         });
       } else {
         // Crear producto
-        response = await fetch('/api/products', {
+        response = await authFetch('/api/products', {
           method: 'POST',
           body: formData
         });
@@ -115,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   confirmDeleteBtn.addEventListener('click', async () => {
     if (currentProductId) {
       try {
-        const response = await fetch(`/api/products/${currentProductId}`, {
+        const response = await authFetch(`/api/products/${currentProductId}`, {
           method: 'DELETE'
         });
         if (response.ok) {
@@ -134,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Función para editar producto
   window.editProduct = function(id) {
     // Obtener datos del producto
-    fetch(`/api/products/${id}`)
+    authFetch(`/api/products/${id}`)
       .then(response => response.json())
       .then(data => {
         if (data.success) {
@@ -143,4 +181,6 @@ document.addEventListener('DOMContentLoaded', () => {
       })
       .catch(error => console.error('Error:', error));
   };
+
+  refreshLogoutButton();
 });
